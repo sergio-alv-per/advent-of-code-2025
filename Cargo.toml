@@ -1,0 +1,11 @@
+[package]
+name = "aoc_2025"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "aoc_2025"
+path = "src/lib.rs"
+
+[dependencies]
+winnow = "0.7.14"
