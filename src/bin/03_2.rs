@@ -1,5 +1,5 @@
+use aoc_2025::parse_input;
 use std::io::{self, Read};
-
 use winnow::Parser;
 use winnow::Result;
 use winnow::ascii::newline;
@@ -38,8 +38,7 @@ fn recursive_max_joltage(remaining_bank: &[i32], usable_digits: usize) -> i64 {
 }
 
 fn solve(input: &str) -> i64 {
-    let mut input = input;
-    let banks = parse_banks(&mut input).expect("unparsable input");
+    let banks = parse_input!(parse_banks, input);
 
     let mut sum = 0;
 

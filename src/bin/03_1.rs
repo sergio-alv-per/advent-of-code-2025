@@ -1,5 +1,5 @@
+use aoc_2025::parse_input;
 use std::io::{self, Read};
-
 use winnow::Parser;
 use winnow::Result;
 use winnow::ascii::newline;
@@ -21,8 +21,7 @@ fn parse_banks(input: &mut &str) -> Result<Vec<Vec<i32>>> {
 }
 
 fn solve(input: &str) -> i32 {
-    let mut input = input;
-    let banks = parse_banks(&mut input).expect("unparsable input");
+    let banks = parse_input!(parse_banks, input);
 
     let mut sum = 0;
 

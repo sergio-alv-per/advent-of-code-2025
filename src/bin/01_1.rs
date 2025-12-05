@@ -1,3 +1,4 @@
+use aoc_2025::parse_input;
 use std::io::{self, Read};
 use winnow::Parser;
 use winnow::Result;
@@ -25,8 +26,7 @@ fn parse_rotation_list(input: &mut &str) -> Result<Vec<Rotation>> {
 }
 
 fn solve(input: &str) -> i32 {
-    let mut input = input;
-    let rotations = parse_rotation_list(&mut input).expect("unparsable input");
+    let rotations = parse_input!(parse_rotation_list, input);
 
     let mut initial_rotation = 50;
     let mut password = 0;

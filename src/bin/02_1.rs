@@ -1,5 +1,5 @@
+use aoc_2025::parse_input;
 use std::io::{self, Read};
-
 use winnow::Parser;
 use winnow::Result;
 use winnow::ascii::dec_int;
@@ -19,8 +19,7 @@ fn parse_id_ranges(input: &mut &str) -> Result<Vec<IdRange>> {
 }
 
 fn solve(input: &str) -> i64 {
-    let mut input = input;
-    let id_ranges = parse_id_ranges(&mut input).expect("unparsable input");
+    let id_ranges = parse_input!(parse_id_ranges, input);
 
     let mut sum = 0i64;
     for IdRange(start, finish) in id_ranges {

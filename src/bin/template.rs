@@ -19,5 +19,5 @@ mod tests {
     use super::solve;
     use aoc_2025::test_with_files;
 
-    test_with_files!("00", solve, 0, 0); // TODO: CHANGE PLACEHOLDER VALUES
+    test_with_files!("01", solve, 0, 0); // TODO: CHANGE PLACEHOLDER VALUES
 }

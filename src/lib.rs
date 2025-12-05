@@ -21,3 +21,12 @@ macro_rules! test_with_files {
         }
     };
 }
+
+#[macro_export]
+macro_rules! parse_input {
+    ($parser:ident, $input:ident) => {{
+        let mut mut_input_ref = $input;
+        let result = $parser(&mut mut_input_ref).expect("unable to parse input");
+        result
+    }};
+}
