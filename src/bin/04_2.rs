@@ -60,21 +60,28 @@ fn solve(input: &str) -> i32 {
     let mut grid = parse_input!(parse_grid, input);
     let mut removable_rolls = 0;
 
-    while let Some((i, j, _)) = grid
-        .iter()
-        .enumerate()
-        .flat_map(|(i, row)| row.iter().enumerate().map(move |(j, sq)| (i, j, sq)))
-        .filter_map(|(i, j, sq)| {
-            if let Square::PaperRoll = sq {
-                Some((i, j, rolls_in_adjacent_squares(i, j, &grid)))
-            } else {
-                None
+    loop {
+        let erasable: Vec<(usize, usize, i32)> = grid
+            .iter()
+            .enumerate()
+            .flat_map(|(i, row)| row.iter().enumerate().map(move |(j, sq)| (i, j, sq)))
+            .filter_map(|(i, j, sq)| {
+                if let Square::PaperRoll = sq {
+                    Some((i, j, rolls_in_adjacent_squares(i, j, &grid)))
+                } else {
+                    None
+                }
+            })
+            .filter(|&(_, _, n_rolls)| n_rolls < 4)
+            .collect();
+        if erasable.is_empty() {
+            break;
+        } else {
+            for (i, j, _) in erasable {
+                grid[i][j] = Square::Empty;
+                removable_rolls += 1;
             }
-        })
-        .find(|&(_, _, n_rolls)| n_rolls < 4)
-    {
-        grid[i][j] = Square::Empty;
-        removable_rolls += 1;
+        }
     }
 
     removable_rolls
