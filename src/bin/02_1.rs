@@ -2,8 +2,8 @@ use aoc_2025::parse_input;
 use std::io::{self, Read};
 use winnow::Parser;
 use winnow::Result;
-use winnow::ascii::dec_int;
-use winnow::combinator::separated;
+use winnow::ascii::{dec_int, newline};
+use winnow::combinator::{separated, terminated};
 
 #[derive(Debug)]
 struct IdRange(i64, i64);
@@ -15,7 +15,7 @@ fn parse_id_range(input: &mut &str) -> Result<IdRange> {
 }
 
 fn parse_id_ranges(input: &mut &str) -> Result<Vec<IdRange>> {
-    separated(0.., parse_id_range, ",").parse_next(input)
+    terminated(separated(0.., parse_id_range, ","), newline).parse_next(input)
 }
 
 fn solve(input: &str) -> i64 {

@@ -41,7 +41,7 @@ fn parse_math_problem(input: &mut &str) -> Result<(Vec<Vec<char>>, Vec<Operation
         .parse_next(input)
 }
 
-fn char_vec_to_i64(char_vec: &Vec<char>) -> Option<i64> {
+fn char_vec_to_i64(char_vec: &[char]) -> Option<i64> {
     if char_vec.iter().all(|&c| c == ' ') {
         None
     } else {
@@ -63,11 +63,13 @@ fn solve(input: &str) -> i64 {
         .map(|i| chars_matrix.iter().map(|inner| inner[i]).collect())
         .collect();
 
-    let numbers_separated_by_none: Vec<Option<i64>> =
-        transposed_char_matrix.iter().map(char_vec_to_i64).collect();
+    let numbers_separated_by_none: Vec<Option<i64>> = transposed_char_matrix
+        .iter()
+        .map(|vec| char_vec_to_i64(vec))
+        .collect();
 
     let number_columns: Vec<Vec<i64>> = numbers_separated_by_none
-        .split(|x| x.is_none())
+        .split(Option::is_none)
         .map(|col| col.iter().filter_map(|&x| x).collect())
         .collect();
 

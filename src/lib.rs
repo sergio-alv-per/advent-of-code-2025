@@ -26,7 +26,12 @@ macro_rules! test_with_files {
 macro_rules! parse_input {
     ($parser:ident, $input:ident) => {{
         let mut mut_input_ref = $input;
-        let result = $parser.parse(&mut mut_input_ref).expect("unparsable input");
-        result
+        match $parser.parse(&mut mut_input_ref) {
+            Ok(res) => res,
+            Err(e) => {
+                eprintln!("{e}");
+                panic!("unparsable input")
+            }
+        }
     }};
 }

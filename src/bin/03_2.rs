@@ -3,12 +3,17 @@ use std::io::{self, Read};
 use winnow::Parser;
 use winnow::Result;
 use winnow::ascii::newline;
-use winnow::combinator::{repeat, separated};
+use winnow::combinator::{repeat, terminated};
 use winnow::token::one_of;
 
 fn parse_single_digit_int(input: &mut &str) -> Result<i32> {
     one_of('0'..='9')
-        .map(|single_digit: char| single_digit.to_digit(10).unwrap() as i32) // TODO: UGLY!
+        .map(|single_digit: char| {
+            single_digit
+                .to_digit(10)
+                .expect("single digit should be a digit")
+        })
+        .map(|digit| digit.try_into().expect("digit should fit into i32"))
         .parse_next(input)
 }
 
@@ -17,7 +22,7 @@ fn parse_bank(input: &mut &str) -> Result<Vec<i32>> {
 }
 
 fn parse_banks(input: &mut &str) -> Result<Vec<Vec<i32>>> {
-    separated(0.., parse_bank, newline).parse_next(input)
+    repeat(1.., terminated(parse_bank, newline)).parse_next(input)
 }
 
 fn recursive_max_joltage(remaining_bank: &[i32], usable_digits: usize) -> i64 {
@@ -30,7 +35,10 @@ fn recursive_max_joltage(remaining_bank: &[i32], usable_digits: usize) -> i64 {
         {
             let remaining_joltage =
                 recursive_max_joltage(&remaining_bank[pos + 1..], usable_digits - 1);
-            return starting_digit as i64 * 10i64.pow((usable_digits - 1) as u32)
+            return i64::from(starting_digit)
+                * 10i64.pow(
+                    u32::try_from(usable_digits - 1).expect("usable digits should fit into u32"),
+                )
                 + remaining_joltage;
         }
     }

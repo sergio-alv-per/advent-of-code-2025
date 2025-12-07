@@ -3,13 +3,13 @@ use std::io::{self, Read};
 use winnow::Parser;
 use winnow::Result;
 use winnow::ascii::{dec_int, newline};
-use winnow::combinator::repeat;
+use winnow::combinator::{repeat, separated_pair, terminated};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 struct Range(i64, i64);
 
 impl Range {
-    pub fn contains(&self, &other: &i64) -> bool {
+    pub fn contains(&self, other: i64) -> bool {
         self.0 <= other && other <= self.1
     }
 }
@@ -28,13 +28,17 @@ fn parse_ranges(input: &mut &str) -> Result<Vec<Range>> {
     repeat(1.., (parse_range, newline).map(|(range, _)| range)).parse_next(input)
 }
 
+fn parse_query(input: &mut &str) -> Result<i64> {
+    dec_int.parse_next(input)
+}
+
 fn parse_queries(input: &mut &str) -> Result<Vec<i64>> {
-    repeat(1.., (dec_int, newline).map(|(q, _): (i64, char)| q)).parse_next(input)
+    repeat(1.., terminated(parse_query, newline)).parse_next(input)
 }
 
 fn parse_problem(input: &mut &str) -> Result<Problem> {
-    (parse_ranges, newline, parse_queries)
-        .map(|(ranges, _, queries)| Problem { ranges, queries })
+    separated_pair(parse_ranges, newline, parse_queries)
+        .map(|(ranges, queries)| Problem { ranges, queries })
         .parse_next(input)
 }
 
@@ -43,14 +47,14 @@ fn consolidate_ranges(first_range: &Range, second_range: &Range) -> Option<Range
     // If they can, return the joined range. Else return None
 
     // First case, second range inside first range
-    if first_range.contains(&second_range.0) && first_range.contains(&second_range.1) {
-        return Some(first_range.clone());
+    if first_range.contains(second_range.0) && first_range.contains(second_range.1) {
+        Some(*first_range)
     // Second case, partial overlap
-    } else if first_range.contains(&second_range.0) && !first_range.contains(&second_range.1) {
-        return Some(Range(first_range.0, second_range.1));
+    } else if first_range.contains(second_range.0) && !first_range.contains(second_range.1) {
+        Some(Range(first_range.0, second_range.1))
     // Third case, ranges do not overlap at all
     } else {
-        return None;
+        None
     }
 }
 
@@ -76,17 +80,13 @@ fn consolidate_all_ranges(ranges: &mut Vec<Range>) -> &Vec<Range> {
     ranges
 }
 
-fn query_in_a_range(query: &i64, ranges: &Vec<Range>) -> bool {
-    match ranges.binary_search_by_key(query, |range| range.0) {
+fn query_in_a_range(query: i64, ranges: &[Range]) -> bool {
+    match ranges.binary_search_by_key(&query, |range| range.0) {
         Ok(_) => true,
         Err(insertion_index) => {
             if insertion_index > 0 && insertion_index <= ranges.len() {
                 let possible_containing_range = ranges.get(insertion_index - 1).unwrap();
-                if possible_containing_range.contains(query) {
-                    true
-                } else {
-                    false
-                }
+                possible_containing_range.contains(query)
             } else {
                 false
             }
@@ -94,7 +94,7 @@ fn query_in_a_range(query: &i64, ranges: &Vec<Range>) -> bool {
     }
 }
 
-fn solve(input: &str) -> i32 {
+fn solve(input: &str) -> usize {
     let Problem {
         mut ranges,
         queries,
@@ -104,8 +104,8 @@ fn solve(input: &str) -> i32 {
 
     queries
         .iter()
-        .filter(|q| query_in_a_range(q, &consolidated_ranges))
-        .count() as i32
+        .filter(|&&q| query_in_a_range(q, consolidated_ranges))
+        .count()
 }
 
 fn main() {

@@ -3,7 +3,7 @@ use std::io::{self, Read};
 use winnow::Parser;
 use winnow::Result;
 use winnow::ascii::{dec_int, newline};
-use winnow::combinator::{dispatch, fail, separated};
+use winnow::combinator::{dispatch, fail, repeat, terminated};
 use winnow::token::take;
 
 #[derive(Debug)]
@@ -14,15 +14,15 @@ enum Rotation {
 
 fn parse_rotation(input: &mut &str) -> Result<Rotation> {
     dispatch!(take(1usize);
-        "L" => dec_int.map(|am| Rotation::Left(am)),
-        "R" => dec_int.map(|am| Rotation::Right(am)),
+        "L" => dec_int.map(Rotation::Left),
+        "R" => dec_int.map(Rotation::Right),
         _ => fail,
     )
     .parse_next(input)
 }
 
 fn parse_rotation_list(input: &mut &str) -> Result<Vec<Rotation>> {
-    separated(0.., parse_rotation, newline).parse_next(input)
+    repeat(1.., terminated(parse_rotation, newline)).parse_next(input)
 }
 
 fn solve(input: &str) -> i32 {

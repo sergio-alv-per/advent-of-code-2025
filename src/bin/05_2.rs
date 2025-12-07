@@ -3,19 +3,24 @@ use std::io::{self, Read};
 use winnow::Parser;
 use winnow::Result;
 use winnow::ascii::{dec_int, newline};
-use winnow::combinator::repeat;
+use winnow::combinator::{repeat, separated_pair, terminated};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 struct Range(i64, i64);
 
 impl Range {
-    fn contains(&self, &other: &i64) -> bool {
+    fn contains(&self, other: i64) -> bool {
         self.0 <= other && other <= self.1
     }
 
     fn number_contained(&self) -> i64 {
         self.1 - self.0 + 1
     }
+}
+
+struct Problem {
+    ranges: Vec<Range>,
+    _queries: Vec<i64>,
 }
 
 fn parse_range(input: &mut &str) -> Result<Range> {
@@ -28,19 +33,36 @@ fn parse_ranges(input: &mut &str) -> Result<Vec<Range>> {
     repeat(1.., (parse_range, newline).map(|(range, _)| range)).parse_next(input)
 }
 
+fn parse_query(input: &mut &str) -> Result<i64> {
+    dec_int.parse_next(input)
+}
+
+fn parse_queries(input: &mut &str) -> Result<Vec<i64>> {
+    repeat(1.., terminated(parse_query, newline)).parse_next(input)
+}
+
+fn parse_problem(input: &mut &str) -> Result<Problem> {
+    separated_pair(parse_ranges, newline, parse_queries)
+        .map(|(ranges, queries)| Problem {
+            ranges,
+            _queries: queries,
+        })
+        .parse_next(input)
+}
+
 fn consolidate_ranges(first_range: &Range, second_range: &Range) -> Option<Range> {
     // Check if two ranges can be joined into a single one
     // If they can, return the joined range. Else return None
 
     // First case, second range inside first range
-    if first_range.contains(&second_range.0) && first_range.contains(&second_range.1) {
-        return Some(first_range.clone());
+    if first_range.contains(second_range.0) && first_range.contains(second_range.1) {
+        Some(*first_range)
     // Second case, partial overlap
-    } else if first_range.contains(&second_range.0) && !first_range.contains(&second_range.1) {
-        return Some(Range(first_range.0, second_range.1));
+    } else if first_range.contains(second_range.0) && !first_range.contains(second_range.1) {
+        Some(Range(first_range.0, second_range.1))
     // Third case, ranges do not overlap at all
     } else {
-        return None;
+        None
     }
 }
 
@@ -67,13 +89,13 @@ fn consolidate_all_ranges(ranges: &mut Vec<Range>) -> &Vec<Range> {
 }
 
 fn solve(input: &str) -> i64 {
-    let mut ranges = parse_input!(parse_ranges, input);
+    let Problem { mut ranges, .. } = parse_input!(parse_problem, input);
 
     let consolidated_ranges = consolidate_all_ranges(&mut ranges);
 
     consolidated_ranges
         .iter()
-        .map(|r| r.number_contained())
+        .map(Range::number_contained)
         .sum()
 }
 
