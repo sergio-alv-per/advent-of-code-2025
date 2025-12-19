@@ -9,3 +9,4 @@ path = "src/lib.rs"
 
 [dependencies]
 winnow = "0.7.14"
+z3 = "0.19.6"
