@@ -53,5 +53,5 @@ mod tests {
     use super::solve;
     use aoc_2025::test_with_files;
 
-    test_with_files!("09", solve, 50, 0);
+    test_with_files!("09", solve, 50, 4748985168);
 }

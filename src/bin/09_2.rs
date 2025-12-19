@@ -79,12 +79,10 @@ impl BoolGrid {
         for (di, dj) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
             if let Some(adj_i) = point.i.checked_add_signed(di)
                 && adj_i < self.rows()
+                && let Some(adj_j) = point.j.checked_add_signed(dj)
+                && adj_j < self.columns()
             {
-                if let Some(adj_j) = point.j.checked_add_signed(dj)
-                    && adj_j < self.columns()
-                {
-                    adj_points.push(Point { i: adj_i, j: adj_j });
-                }
+                adj_points.push(Point { i: adj_i, j: adj_j });
             }
         }
 
@@ -118,8 +116,8 @@ struct CoordinateCompressor {
 
 impl CoordinateCompressor {
     fn new(coordinate_values: &[usize]) -> Self {
-        let mut sorted_deduped_values: Vec<usize> = coordinate_values.iter().copied().collect();
-        sorted_deduped_values.sort();
+        let mut sorted_deduped_values: Vec<usize> = coordinate_values.to_vec();
+        sorted_deduped_values.sort_unstable();
         sorted_deduped_values.dedup();
 
         let compress: HashMap<usize, usize> = sorted_deduped_values.into_iter().zip(0..).collect();
@@ -134,12 +132,12 @@ impl CoordinateCompressor {
         }
     }
 
-    fn compress(&self, val: &usize) -> usize {
-        self.compress_map[val]
+    fn compress(&self, val: usize) -> usize {
+        self.compress_map[&val]
     }
 
-    fn decompress(&self, val: &usize) -> usize {
-        self.decompress_map[val]
+    fn decompress(&self, val: usize) -> usize {
+        self.decompress_map[&val]
     }
 
     fn len(&self) -> usize {
@@ -169,15 +167,15 @@ impl PointCompressor {
 
     fn compress(&self, point: &Point) -> Point {
         Point {
-            i: self.compressor_i.compress(&point.i),
-            j: self.compressor_j.compress(&point.j),
+            i: self.compressor_i.compress(point.i),
+            j: self.compressor_j.compress(point.j),
         }
     }
 
     fn decompress(&self, point: &Point) -> Point {
         Point {
-            i: self.compressor_i.decompress(&point.i),
-            j: self.compressor_j.decompress(&point.j),
+            i: self.compressor_i.decompress(point.i),
+            j: self.compressor_j.decompress(point.j),
         }
     }
 

@@ -68,7 +68,7 @@ fn parse_u6_vec(input: &mut &str) -> Result<Vec<u16>> {
 }
 fn parse_button(input: &mut &str) -> Result<LightDiagram> {
     delimited('(', parse_u6_vec, ')')
-        .map(|triggered_lights| LightDiagram::from(triggered_lights))
+        .map(LightDiagram::from)
         .parse_next(input)
 }
 
@@ -109,12 +109,12 @@ fn solvable_in_n_button_presses(problem_row: &ProblemRow, n: u64) -> bool {
             .eq(&zero_bv),
     );
 
-    for pushed_button in variables.iter() {
+    for pushed_button in &variables {
         let equals_some_button = problem_row
             .buttons
             .iter()
             .fold(Bool::from_bool(false), |acc, but| {
-                acc | pushed_button.eq(BV::from(but.clone()))
+                acc | pushed_button.eq(BV::from(*but))
             });
 
         solver.assert(equals_some_button | pushed_button.eq(&zero_bv));
@@ -130,7 +130,7 @@ fn solvable_in_n_button_presses(problem_row: &ProblemRow, n: u64) -> bool {
 fn min_n_to_solve_problem(pr: &ProblemRow) -> u64 {
     let button_presses_array: Vec<u64> = (0..MAX_BUTTON_PRESSES).collect();
     button_presses_array
-        .partition_point(|&n| !solvable_in_n_button_presses(&pr, n))
+        .partition_point(|&n| !solvable_in_n_button_presses(pr, n))
         .try_into()
         .expect("usize did not fit in u64")
 }

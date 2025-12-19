@@ -76,11 +76,11 @@ fn solve(input: &str) -> i32 {
             .collect();
         if erasable.is_empty() {
             break;
-        } else {
-            for (i, j, _) in erasable {
-                grid[i][j] = Square::Empty;
-                removable_rolls += 1;
-            }
+        }
+
+        for (i, j, _) in erasable {
+            grid[i][j] = Square::Empty;
+            removable_rolls += 1;
         }
     }
 

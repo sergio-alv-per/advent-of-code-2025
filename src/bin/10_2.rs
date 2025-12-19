@@ -43,60 +43,72 @@ fn parse_problem(input: &mut &str) -> Result<Vec<ProblemRow>> {
     repeat(1.., terminated(parse_problem_row, newline)).parse_next(input)
 }
 
-fn min_button_presses(pr: &ProblemRow, problem_i: u64) -> u64 {
-    let mut bij: Vec<Vec<bool>> = vec![vec![false; pr.joltages.len()]; pr.buttons.len()];
+fn button_machine_activation_matrix(buttons: &[Vec<u16>], n_machines: usize) -> Vec<Vec<bool>> {
+    let mut button_machine_matrix: Vec<Vec<bool>> = vec![vec![false; n_machines]; buttons.len()];
 
-    for (i, button) in pr.buttons.iter().enumerate() {
+    for (i, button) in buttons.iter().enumerate() {
         for &j in button {
-            bij[i][j as usize] = true;
+            button_machine_matrix[i][j as usize] = true;
         }
     }
 
-    let opt = Optimize::new();
-    let variables: Vec<Int> = {
-        let mut vars = Vec::with_capacity(bij.len());
+    button_machine_matrix
+}
 
-        for button_i in 0..bij.len() {
-            vars.push(Int::new_const(format!("press_{problem_i}_{button_i}")));
-        }
-        vars
-    };
+fn init_z3_variables(n_variables: usize, problem_i: usize) -> Vec<Int> {
+    let mut variables = Vec::with_capacity(n_variables);
 
-    let total_presses = Int::sum(variables.iter());
+    for button_i in 0..n_variables {
+        variables.push(Int::new_const(format!("press_{problem_i}_{button_i}")));
+    }
+    variables
+}
 
-    opt.minimize(&total_presses);
+fn min_button_presses(pr: &ProblemRow, problem_index: usize) -> u64 {
+    let button_machine_matrix = button_machine_activation_matrix(&pr.buttons, pr.joltages.len());
 
-    for var in variables.iter() {
-        opt.assert(&var.ge(0));
+    let optimizer = Optimize::new();
+    let button_presses = init_z3_variables(button_machine_matrix.len(), problem_index);
+
+    let total_button_presses = Int::sum(button_presses.iter());
+
+    optimizer.minimize(&total_button_presses);
+
+    for bp in &button_presses {
+        let bp_geq_zero = &bp.ge(0);
+        optimizer.assert(bp_geq_zero);
     }
 
     for (j, &joltage) in pr.joltages.iter().enumerate() {
-        let vars_that_activate_this_j: Vec<&Int> = (0..bij.len())
-            .filter_map(|i| if bij[i][j] { Some(&variables[i]) } else { None })
+        let button_presses_affecting_this_machine: Vec<&Int> = (0..button_machine_matrix.len())
+            .filter_map(|i| {
+                if button_machine_matrix[i][j] {
+                    Some(&button_presses[i])
+                } else {
+                    None
+                }
+            })
             .collect();
 
-        if vars_that_activate_this_j.is_empty() {
-            let panic_msg = format!("no buttons activate machine with j={}", j);
-            panic!("{panic_msg}");
-        }
+        let sum_button_presses_equals_joltage =
+            Int::sum(button_presses_affecting_this_machine.into_iter()).eq(joltage);
 
-        opt.assert(&Int::sum(vars_that_activate_this_j.into_iter()).eq(joltage));
+        optimizer.assert(&sum_button_presses_equals_joltage);
     }
 
-    match opt.check(&[]) {
+    match optimizer.check(&[]) {
         z3::SatResult::Sat => {
-            let model = opt.get_model().unwrap();
-            let presses = model.eval(&total_presses, true).unwrap();
-            presses.as_u64().unwrap()
+            if let Some(model) = optimizer.get_model()
+                && let Some(presses) = model.eval(&total_button_presses, true)
+                && let Some(presses) = presses.as_u64()
+            {
+                presses
+            } else {
+                panic!("solution extraction went wrong")
+            }
         }
-        z3::SatResult::Unsat => {
-            println!("{opt}");
+        z3::SatResult::Unsat | z3::SatResult::Unknown => {
             panic!("problem not solvable")
-        }
-
-        z3::SatResult::Unknown => {
-            eprintln!("{}", opt.get_reason_unknown().unwrap());
-            panic!("problem result unknown")
         }
     }
 }
@@ -107,10 +119,7 @@ fn solve(input: &str) -> u64 {
     problems
         .iter()
         .enumerate()
-        .map(|(i, pr)| {
-            println!("solving problem");
-            min_button_presses(pr, i.try_into().unwrap())
-        })
+        .map(|(i, pr)| min_button_presses(pr, i))
         .sum()
 }
 

@@ -54,7 +54,7 @@ fn solve(input: &str) -> i64 {
             .flat_map(|(i, row)| row.iter().enumerate().map(move |(j, &dist)| (dist, i, j)))
             .collect();
 
-        distances_vec.sort();
+        distances_vec.sort_unstable();
         distances_vec
     };
 

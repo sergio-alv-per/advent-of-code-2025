@@ -33,7 +33,7 @@ fn parse_junction_boxes(input: &mut &str) -> Result<Vec<JunctionBox>> {
 fn solve(input: &str) -> i32 {
     let boxes = {
         let mut boxes = parse_input!(parse_junction_boxes, input);
-        boxes.sort();
+        boxes.sort_unstable();
         boxes
     };
 
@@ -55,7 +55,7 @@ fn solve(input: &str) -> i32 {
             .flat_map(|(i, row)| row.iter().enumerate().map(move |(j, &dist)| (dist, i, j)))
             .collect();
 
-        distances_vec.sort();
+        distances_vec.sort_unstable();
         distances_vec
     };
 
@@ -78,7 +78,7 @@ fn solve(input: &str) -> i32 {
     });
 
     let mut values: Vec<i32> = counts.into_values().collect();
-    values.sort();
+    values.sort_unstable();
     values.iter().rev().take(3).product()
 }
 
