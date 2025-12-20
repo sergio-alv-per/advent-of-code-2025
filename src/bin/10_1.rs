@@ -93,7 +93,7 @@ fn min_button_presses(pr: &ProblemRow, problem_index: usize) -> u64 {
         let sum_button_presses_equals_light_activated =
             Int::sum(button_presses_affecting_this_machine.into_iter())
                 .modulo(2)
-                .eq(if light_activated { 1 } else { 0 });
+                .eq(i32::from(light_activated));
 
         optimizer.assert(&sum_button_presses_equals_light_activated);
     }
